@@ -251,22 +251,77 @@ function statBar(name, value) {
 
 function renderMap() {
   if (!map) return;
+
   map.querySelectorAll(".node").forEach(n => n.remove());
   lineLayer.innerHTML = "";
+
+  // 같은 두 캐릭터 사이에 관계가 여러 개 있으면 직선이 겹치므로,
+  // 같은 쌍끼리 묶은 뒤 곡선의 휘어짐 정도를 다르게 준다.
+  const pairGroups = {};
   relations.forEach(r => {
     const a = getChar(r.from), b = getChar(r.to);
     if (!a || !b) return;
-    const x1 = a.x + 75, y1 = a.y + 55, x2 = b.x + 75, y2 = b.y + 55;
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", x1); line.setAttribute("y1", y1);
-    line.setAttribute("x2", x2); line.setAttribute("y2", y2);
-    line.setAttribute("stroke", relationColor(r.type)); line.setAttribute("stroke-width", "3");
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", (x1+x2)/2); text.setAttribute("y", (y1+y2)/2 - 8);
-    text.setAttribute("text-anchor", "middle"); text.setAttribute("class", "relationText");
-    text.textContent = `${r.type} ${r.score}`;
-    lineLayer.appendChild(line); lineLayer.appendChild(text);
+
+    const key = [r.from, r.to].sort().join("__");
+    if (!pairGroups[key]) pairGroups[key] = [];
+    pairGroups[key].push(r);
   });
+
+  Object.values(pairGroups).forEach(group => {
+    const total = group.length;
+
+    group.forEach((r, index) => {
+      const a = getChar(r.from), b = getChar(r.to);
+      if (!a || !b) return;
+
+      const x1 = a.x + 75, y1 = a.y + 55;
+      const x2 = b.x + 75, y2 = b.y + 55;
+
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2;
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const distance = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+
+      // 선에 수직인 방향. 이 방향으로 제어점을 이동시켜 곡선을 만든다.
+      const normalX = -dy / distance;
+      const normalY = dx / distance;
+
+      // 1개면 거의 직선, 2개 이상이면 좌우로 벌어지게 한다.
+      const curveGap = 34;
+      const curveOffset = (index - (total - 1) / 2) * curveGap;
+
+      const controlX = midX + normalX * curveOffset;
+      const controlY = midY + normalY * curveOffset;
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", `M ${x1} ${y1} Q ${controlX} ${controlY} ${x2} ${y2}`);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", relationColor(r.type));
+      path.setAttribute("stroke-width", "3");
+      path.setAttribute("stroke-linecap", "round");
+
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", controlX);
+      text.setAttribute("y", controlY - 8);
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("class", "relationText");
+      text.textContent = `${r.type} ${r.score}`;
+
+      // 글자가 선과 너무 붙지 않도록 흰색 배경을 깔아준다.
+      const labelBg = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      labelBg.setAttribute("x", controlX);
+      labelBg.setAttribute("y", controlY - 8);
+      labelBg.setAttribute("text-anchor", "middle");
+      labelBg.setAttribute("class", "relationTextBg");
+      labelBg.textContent = `${r.type} ${r.score}`;
+
+      lineLayer.appendChild(path);
+      lineLayer.appendChild(labelBg);
+      lineLayer.appendChild(text);
+    });
+  });
+
   characters.forEach(c => {
     const node = document.createElement("div");
     node.className = "node";
