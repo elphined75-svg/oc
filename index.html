@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>자캐 세계관 시뮬레이터</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>자캐 세계관 시뮬레이터</h1>
+      <p>캐릭터들이 관계를 맺고, 대화하고, 사건을 만들어갑니다.</p>
+    </div>
+    <div class="statusBox">
+      <div>세계 시간: <strong id="dayText">1일차</strong></div>
+      <div>자동 진행: <strong id="autoText">정지</strong></div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel creatorPanel">
+      <h2>캐릭터 등록</h2>
+      <input id="charName" placeholder="이름" />
+      <input id="charRole" placeholder="역할 / 직업 / 포지션" />
+      <textarea id="charDesc" placeholder="성격, 설정, 비밀 등을 적어주세요."></textarea>
+      <input id="charImage" type="file" accept="image/*" />
+      <button onclick="addCharacter()">캐릭터 추가</button>
+
+      <hr />
+
+      <h2>관계 만들기</h2>
+      <select id="fromChar"></select>
+      <select id="toChar"></select>
+      <select id="relationType">
+        <option value="친구">친구</option>
+        <option value="라이벌">라이벌</option>
+        <option value="가족">가족</option>
+        <option value="연인">연인</option>
+        <option value="동료">동료</option>
+        <option value="스승/제자">스승/제자</option>
+        <option value="적대">적대</option>
+        <option value="비밀 관계">비밀 관계</option>
+      </select>
+      <button onclick="addRelation()">관계 추가</button>
+
+      <hr />
+
+      <h2>진행</h2>
+      <div class="buttonGrid">
+        <button onclick="nextTurn()">하루 진행</button>
+        <button onclick="toggleAuto()" id="autoBtn">자동 진행 시작</button>
+        <button onclick="generateBigEvent()">큰 사건 발생</button>
+        <button onclick="saveGame()">저장</button>
+        <button onclick="resetGame()" class="danger">초기화</button>
+      </div>
+    </section>
+
+    <section class="worldArea">
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('characters')">캐릭터</button>
+        <button class="tab" onclick="showTab('map')">관계도</button>
+        <button class="tab" onclick="showTab('story')">스토리 로그</button>
+      </div>
+
+      <div id="charactersTab" class="tabContent active">
+        <div id="characterList" class="characterList"></div>
+      </div>
+
+      <div id="mapTab" class="tabContent">
+        <div id="relationshipMap">
+          <svg id="lineLayer"></svg>
+        </div>
+      </div>
+
+      <div id="storyTab" class="tabContent">
+        <div id="storyLog" class="storyLog"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
