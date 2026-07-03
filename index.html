@@ -1,142 +1,85 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OC World Simulator</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OC World Simulator v2.0</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="logo">OC</div>
-        <div>
-          <h1>자캐 세계관</h1>
-          <p>관계 · 사건 · 이야기 시뮬레이터</p>
+  <header class="topbar">
+    <div>
+      <h1>OC World Simulator <span>v2.0</span></h1>
+      <p>자캐 생성 · 관계도 · 감정 · 호감도 · 자동 대화</p>
+    </div>
+    <div class="top-actions">
+      <button id="btnExport">저장파일 내보내기</button>
+      <label class="file-btn">불러오기<input id="importFile" type="file" accept="application/json" hidden></label>
+      <button id="btnReset" class="danger">전체 초기화</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel left">
+      <h2>캐릭터 만들기</h2>
+      <div class="form-grid">
+        <input id="name" placeholder="이름" />
+        <input id="age" placeholder="나이/학년" />
+        <input id="trait" placeholder="성격 키워드 예: 차분함, 츤데레" />
+        <input id="like" placeholder="좋아하는 것" />
+        <input id="dislike" placeholder="싫어하는 것" />
+        <input id="catchphrase" placeholder="말버릇" />
+        <textarea id="bio" placeholder="간단한 설정/배경"></textarea>
+        <input id="photo" type="file" accept="image/*" />
+        <button id="btnAdd">캐릭터 추가</button>
+      </div>
+
+      <h2>관계 만들기</h2>
+      <select id="charA"></select>
+      <select id="charB"></select>
+      <select id="relType">
+        <option>친구</option><option>소꿉친구</option><option>라이벌</option><option>가족</option>
+        <option>연인</option><option>짝사랑</option><option>스승/제자</option><option>적대</option><option>비밀 관계</option>
+      </select>
+      <input id="relMemo" placeholder="관계 설명" />
+      <button id="btnRel">관계 추가</button>
+      <p class="hint">캐릭터 카드를 클릭하면 선택됩니다. 2명 선택 후 관계 추가도 가능합니다.</p>
+    </section>
+
+    <section class="center">
+      <div class="worldbar">
+        <div>날짜 <b id="day">1</b>일차 · 시간 <b id="timeSlot">아침</b></div>
+        <div class="world-actions">
+          <button id="btnNext">시간 진행</button>
+          <button id="btnEvent">랜덤 사건</button>
+          <button id="btnTalk">자동 대화 1회</button>
+          <button id="btnAuto">자동 진행 시작</button>
         </div>
       </div>
-      <nav>
-        <button class="nav active" data-view="world">세계관</button>
-        <button class="nav" data-view="characters">캐릭터</button>
-        <button class="nav" data-view="relations">관계도</button>
-        <button class="nav" data-view="story">스토리 로그</button>
-        <button class="nav" data-view="save">저장/백업</button>
-      </nav>
-      <div class="quick">
-        <button id="tickBtn">하루 진행</button>
-        <button id="autoBtn">자동 진행 시작</button>
-        <button id="eventBtn">큰 사건 발생</button>
+      <div id="canvas" class="canvas">
+        <svg id="svg"></svg>
       </div>
-      <div class="clock">
-        <b>Day <span id="dayText">1</span></b>
-        <span id="phaseText">아침</span>
-      </div>
-    </aside>
+    </section>
 
-    <main>
-      <section id="world" class="view active">
-        <div class="hero">
-          <div>
-            <h2 id="worldTitle">나의 자캐 세계관</h2>
-            <p id="worldDesc">캐릭터를 만들고, 관계를 연결하고, 자동으로 이야기가 진행되게 해보세요.</p>
-          </div>
-          <button id="editWorldBtn">세계관 수정</button>
-        </div>
-        <div class="cards">
-          <div class="card stat"><span>캐릭터</span><b id="charCount">0</b></div>
-          <div class="card stat"><span>관계</span><b id="relCount">0</b></div>
-          <div class="card stat"><span>기록</span><b id="logCount">0</b></div>
-        </div>
-        <div class="panel">
-          <h3>최근 이야기</h3>
-          <div id="recentLogs" class="miniLogs"></div>
-        </div>
-      </section>
+    <section class="panel right">
+      <h2>선택 캐릭터</h2>
+      <div id="detail" class="detail empty">캐릭터를 선택하세요.</div>
+      <h2>스토리 로그</h2>
+      <div id="log" class="log"></div>
+    </section>
+  </main>
 
-      <section id="characters" class="view">
-        <div class="sectionHead">
-          <h2>캐릭터 관리</h2>
-          <button id="newCharacterBtn">캐릭터 추가</button>
-        </div>
-        <div id="characterGrid" class="characterGrid"></div>
-      </section>
+  <template id="cardTpl">
+    <article class="card">
+      <button class="x">×</button>
+      <div class="avatar"></div>
+      <h3></h3>
+      <p class="sub"></p>
+      <div class="mood"></div>
+      <div class="bars"></div>
+    </article>
+  </template>
 
-      <section id="relations" class="view">
-        <div class="sectionHead">
-          <h2>관계도</h2>
-          <div class="row">
-            <select id="fromSelect"></select>
-            <select id="toSelect"></select>
-            <select id="typeSelect">
-              <option>친구</option><option>라이벌</option><option>가족</option><option>연인</option>
-              <option>스승/제자</option><option>적대</option><option>비밀 관계</option><option>동료</option>
-            </select>
-            <button id="addRelationBtn">관계 추가</button>
-          </div>
-        </div>
-        <div class="relationWrap">
-          <div id="relationCanvas" class="relationCanvas">
-            <svg id="relationSvg"></svg>
-          </div>
-          <div class="relationPanel">
-            <h3>관계 목록</h3>
-            <div id="relationList"></div>
-          </div>
-        </div>
-      </section>
-
-      <section id="story" class="view">
-        <div class="sectionHead">
-          <h2>스토리 로그</h2>
-          <div class="row">
-            <button id="clearLogsBtn">기록 지우기</button>
-            <button id="exportStoryBtn">이야기 TXT 저장</button>
-          </div>
-        </div>
-        <div id="storyLog" class="storyLog"></div>
-      </section>
-
-      <section id="save" class="view">
-        <h2>저장/백업</h2>
-        <div class="panel savePanel">
-          <p>이 게임은 현재 기기의 브라우저에 자동 저장됩니다. 다른 기기로 옮기려면 백업 파일을 내려받아 가져오세요.</p>
-          <button id="exportBtn">백업 JSON 다운로드</button>
-          <label class="fileLabel">백업 가져오기<input id="importInput" type="file" accept="application/json" /></label>
-          <button id="resetBtn" class="danger">전체 초기화</button>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <dialog id="worldDialog">
-    <form method="dialog" class="dialogForm">
-      <h3>세계관 수정</h3>
-      <input id="worldNameInput" placeholder="세계관 이름" />
-      <textarea id="worldDescInput" placeholder="세계관 설명"></textarea>
-      <button id="saveWorldBtn">저장</button>
-    </form>
-  </dialog>
-
-  <dialog id="charDialog">
-    <form method="dialog" class="dialogForm">
-      <h3 id="charDialogTitle">캐릭터 추가</h3>
-      <input id="nameInput" placeholder="이름" />
-      <input id="roleInput" placeholder="역할/소속 예: 마법학교 2학년" />
-      <textarea id="bioInput" placeholder="성격, 비밀, 목표 등을 적어주세요"></textarea>
-      <input id="imageInput" type="file" accept="image/*" />
-      <div class="rangeGrid">
-        <label>매력 <input id="charmInput" type="range" min="0" max="100" value="50"></label>
-        <label>지성 <input id="mindInput" type="range" min="0" max="100" value="50"></label>
-        <label>용기 <input id="braveInput" type="range" min="0" max="100" value="50"></label>
-        <label>친화력 <input id="socialInput" type="range" min="0" max="100" value="50"></label>
-      </div>
-      <button id="saveCharBtn">저장</button>
-    </form>
-  </dialog>
-
-  <script src="js/storage.js"></script>
-  <script src="js/sim.js"></script>
-  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
